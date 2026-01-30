@@ -4,7 +4,7 @@ This repository contains course materials and example programs for an introducto
 
 **Textbooks Used for the Course:**
 
-- *Introductory Java Programming: Example Code & Notes by Don Spickler*, Included in the repository.
+- *Introductory Java Programming: Example Code & Notes by Don Spickler*, included in the repository.
 - *Introduction to Programming Using Java by David J. Eck*, available online for free.
 
 **Contents:**
