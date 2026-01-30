@@ -1,0 +1,275 @@
+import java.util.Scanner;
+
+/*-
+ * BlackJack
+ * This program allows the user to play the game of blackjack against the computer.  
+ * The computer is the dealer and the user is the player.  The dealer is restricted
+ * in its play by some, but not all, of the dealer rules in most casinos.  There is
+ * no betting in this implementation. 
+ * The dealer will stand on 
+ * 1. A hand of 18 or higher, unless the player will win.
+ * 2. A hard 17, unless the player will win.
+ * 3. If the player has gone bust.
+ * 4. A soft 17, will randomly stand or hit.
+ * 
+ * Winner determination is done by,
+ * 1. If one player has gone bust but the other has not.  The one who has not gone 
+ * bust wins,.
+ * 2. A natural 21 (A+{10, J, Q, K})
+ * 3. 5 cards under 21
+ * 4. Hand value
+ * 
+ * Author:  Don Spickler
+ * Date: 3/11/2011
+ */
+
+public class BlackJack {
+
+	public static void PrintHands(Hand Dealer, Hand Player) {
+		System.out.print("Dealer: ");
+		Dealer.PrintBlackJackHand();
+
+		System.out.print("Player: ");
+		Player.PrintHand();
+	}
+
+	public static void PrintHandsUp(Hand Dealer, Hand Player) {
+		System.out.print("Dealer: ");
+		Dealer.PrintHand();
+
+		System.out.print("Player: ");
+		Player.PrintHand();
+	}
+
+	public static boolean DetermineDealerStand(Hand Dealer, Hand Player) {
+		boolean dealerStand = false;
+
+		int worth1 = Dealer.getWorth(1);
+		int worth11 = Dealer.getWorth(11);
+		int handvalue = worth11;
+		if (handvalue > 21)
+			handvalue = worth1;
+
+		if (Dealer.getNumCards() == 5)
+			return true;
+
+		if (worth1 == 7 && Dealer.hasAce()) {
+			if ((int) (Math.random() * 2) == 0)
+				dealerStand = true;
+		} else if (worth11 >= 17 && worth11 <= 21) {
+			dealerStand = true;
+		} else if (worth1 >= 17) {
+			dealerStand = true;
+		}
+
+		int win = Winner(Dealer, Player);
+		boolean playerbust = Bust(Player, false);
+		boolean dealerbust = Bust(Dealer, false);
+
+		if (win != 2 && handvalue < 21)
+			dealerStand = false;
+
+		if (playerbust || dealerbust)
+			dealerStand = true;
+
+		return dealerStand;
+	}
+
+	public static boolean Bust(Hand TheHand, boolean dealer) {
+		boolean bust = false;
+
+		if (dealer) {
+			int dealerworth1 = 0;
+			int dealerworth11 = 0;
+
+			for (int i = 1; i < TheHand.getNumCards(); i++) {
+				dealerworth1 += TheHand.getCard(i).getWorth(1);
+				dealerworth11 += TheHand.getCard(i).getWorth(11);
+
+				if (dealerworth1 > 21 && dealerworth11 > 21)
+					bust = true;
+			}
+		} else {
+			if (TheHand.getWorth(1) > 21 && TheHand.getWorth(11) > 21)
+				bust = true;
+		}
+
+		return bust;
+	}
+
+	public static int Menu() {
+		int Selection = 0;
+
+		Scanner kb = new Scanner(System.in);
+		do {
+			System.out.println();
+			System.out.println("1. Hit");
+			System.out.println("2. Stand");
+			System.out.println();
+			System.out.print("Selection: ");
+			Selection = kb.nextInt();
+
+			if (Selection != 1 && Selection != 2) {
+				System.out.println("Invalid selection, please try again.");
+			}
+
+		} while (Selection != 1 && Selection != 2);
+		System.out.println();
+
+		return Selection;
+	}
+
+	public static boolean PlayAgainMenu() {
+		String Selection = "";
+
+		Scanner kb = new Scanner(System.in);
+		do {
+			System.out.println();
+			System.out.print("Would you like to play another game?  (Y/N):  ");
+			Selection = kb.nextLine();
+
+			if (Selection.length() > 0)
+				Selection = Selection.substring(0, 1).toUpperCase();
+
+			if (!Selection.equals("Y") && !Selection.equals("N")) {
+				System.out.println("Invalid selection, please try again.");
+			}
+
+		} while (!Selection.equals("Y") && !Selection.equals("N"));
+
+		if (Selection.equals("Y"))
+			return true;
+		else
+			return false;
+	}
+
+	public static int Winner(Hand Dealer, Hand Player) {
+		// 0 - draw, 1 - player wins, 2 - dealer wins
+
+		boolean playerNatural21 = false;
+		boolean dealerNatural21 = false;
+		boolean player5Under21 = false;
+		boolean dealer5Under21 = false;
+
+		int playerWorth = Player.getWorth(11);
+		if (playerWorth > 21)
+			playerWorth = Player.getWorth(1);
+
+		int dealerWorth = Dealer.getWorth(11);
+		if (dealerWorth > 21)
+			dealerWorth = Dealer.getWorth(1);
+
+		// Take care of > 21 loss for player, dealer or both.
+		if (playerWorth > 21 && dealerWorth > 21)
+			return 0;
+		else if (dealerWorth > 21)
+			return 1;
+		else if (playerWorth > 21)
+			return 2;
+
+		if (playerWorth == 21 && Player.getNumCards() == 2)
+			playerNatural21 = true;
+
+		if (dealerWorth == 21 && Dealer.getNumCards() == 2)
+			dealerNatural21 = true;
+
+		if (playerWorth < 21 && Player.getNumCards() == 5)
+			player5Under21 = true;
+
+		if (dealerWorth < 21 && Dealer.getNumCards() == 5)
+			dealer5Under21 = true;
+
+		if (playerNatural21 && dealerNatural21)
+			return 0;
+		else if (playerNatural21)
+			return 1;
+		else if (dealerNatural21)
+			return 2;
+		
+		if (player5Under21 && !dealer5Under21)
+			return 1;
+		else if (dealer5Under21 && !player5Under21)
+			return 2;
+		
+		if (playerWorth == dealerWorth)
+			return 0;
+		else if (playerWorth > dealerWorth)
+			return 1;
+		else
+			return 2;
+	}
+
+	public static void main(String[] args) {
+		Hand Dealer = new Hand();
+		Hand Player = new Hand();
+		Deck Cards = new Deck();
+		int playerwins = 0;
+		int dealerwins = 0;
+		int gamesplayed = 0;
+
+		do {
+			int Selection = 0;
+			boolean DealerStay = false;
+			boolean playerbust = true;
+			boolean dealerbust = true;
+
+			Cards.ShuffleDeck();
+
+			gamesplayed++;
+
+			System.out.println();
+			System.out.println("Game " + gamesplayed);
+			System.out.println("--------------------");
+			System.out.println();
+
+			Player.clearHand();
+			Dealer.clearHand();
+
+			Player.addToHand(Cards.dealCard());
+			Dealer.addToHand(Cards.dealCard());
+			Player.addToHand(Cards.dealCard());
+			Dealer.addToHand(Cards.dealCard());
+
+			do {
+				PrintHands(Dealer, Player);
+				Selection = Menu();
+
+				if (Selection == 1)
+					Player.addToHand(Cards.dealCard());
+
+				playerbust = Bust(Player, false);
+				DealerStay = DetermineDealerStand(Dealer, Player);
+
+				if (!DealerStay)
+					Dealer.addToHand(Cards.dealCard());
+
+				dealerbust = Bust(Dealer, true);
+			} while (Selection != 2 && Player.getNumCards() < 5 && !dealerbust && !playerbust);
+
+			while (!DetermineDealerStand(Dealer, Player)) {
+				Dealer.addToHand(Cards.dealCard());
+			}
+
+			System.out.println();
+			PrintHandsUp(Dealer, Player);
+
+			int winner = Winner(Dealer, Player);
+			if (winner == 1) {
+				playerwins++;
+				System.out.println("Player Won");
+			} else if (winner == 2) {
+				dealerwins++;
+				System.out.println("Dealer Won");
+			} else {
+				System.out.println("It was a Draw");
+			}
+		} while (PlayAgainMenu());
+
+		System.out.println();
+		System.out.println("Games Played = " + gamesplayed);
+		System.out.println("Player Wins = " + playerwins);
+		System.out.println("Dealer Wins = " + dealerwins);
+		System.out.println("Draws = " + (gamesplayed - dealerwins - playerwins));
+		System.out.println();
+	}
+}

@@ -1,0 +1,51 @@
+import javax.swing.*;
+import java.awt.*;
+
+/*-
+ * ToolbarButton
+ * Extends JButton to make the creation of buttons specifically for a toolbar easier. 
+ * 
+ * Author:  Don Spickler
+ */
+
+public class ToolbarButton extends JButton {
+	public ToolbarButton(Icon btnImage, String btnText, String ToolTip, int width, int height) {
+		setIcon(btnImage);
+		setText(btnText);
+		setVerticalTextPosition(SwingConstants.BOTTOM);
+		setHorizontalTextPosition(SwingConstants.CENTER);
+		setIconTextGap(0);
+		setToolTipText(ToolTip);
+		setPreferredSize(new Dimension(width, height));
+		setMaximumSize(new Dimension(width, height));
+	}
+
+	public ToolbarButton(Icon btnImage, String btnText, String ToolTip) {
+		setIcon(btnImage);
+		setText(btnText);
+		setVerticalTextPosition(SwingConstants.BOTTOM);
+		setHorizontalTextPosition(SwingConstants.CENTER);
+		setIconTextGap(0);
+		setToolTipText(ToolTip);
+	}
+
+	public ToolbarButton(Icon btnImage, String ToolTip) {
+		setIcon(btnImage);
+		setToolTipText(ToolTip);
+	}
+
+	public ToolbarButton(Icon btnImage, String ToolTip, int width, int height) {
+		setIcon(btnImage);
+		setToolTipText(ToolTip);
+		setPreferredSize(new Dimension(width, height));
+		setMaximumSize(new Dimension(width, height));
+	}
+
+	public ToolbarButton(Icon btnImage) {
+		setIcon(btnImage);
+	}
+
+	public ToolbarButton(String btnText) {
+		setText(btnText);
+	}
+}

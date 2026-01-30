@@ -1,0 +1,26 @@
+Since the discovery of public key cryptography in 1976, cryptography has relied
+extensively on algebraic number theory, specifically on the properties of rings
+and fields. The world's e-commerce system would not exist without the RSA
+algorithm, the most commonly used encryption and authentication algorithm,
+which utilizes these algebraic structures. Furthermore, the Advanced Encryption
+Standard (AES), one of the most common symmetric cyphers, attributes its speed
+and security to the structure of factor rings, similar to those we have
+studied.
+
+While these methods are secure by today's standards, with the ever increasing
+computational power of the computer, they will eventually need to be replaced.
+Research by Nobel Prize winners, David J. Wineland and Serge Haroche, suggests
+that if the quantum computer is successfully built then new cryptographic
+algorithms must be found. In short, none of the current cryptographic methods
+currently used in practice will stand up to the computational power of the
+quantum computer.
+
+With this realization, there is a substantial amount of research being done on
+post-quantum cryptography; cryptographic methods that will not succumb to the
+power of the quantum computer. Many of the most promising methods being
+developed utilize the multiplicative group of units in ring structures, such as
+the ones we have studied. My research has produced concise formulas for
+determining the cyclic group decomposition of the multiplicative group of units
+for a large class of quotient rings closely related to those currently being
+used and those that are proposed for future cryptographic methods.
+

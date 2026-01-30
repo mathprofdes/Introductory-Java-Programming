@@ -1,0 +1,71 @@
+/*-
+ * Hand
+ * Hand class uses an array of 5 cards to simulate a single blackjack hand. 
+ * Author:  Don Spickler
+ * Date: 3/7/2011
+ */
+
+public class Hand {
+// Data Members
+	private Card hand[] = new Card[5];
+	private int cardsInHand = 0;
+
+	public Hand() {
+		cardsInHand = 0;
+	}
+
+	public void clearHand() {
+		cardsInHand = 0;
+	}
+
+	public int getNumCards() {
+		return cardsInHand;
+	}
+
+	public Card getCard(int i) {
+		if (i < cardsInHand)
+			return hand[i];
+		
+		return null;
+	}
+
+	public void addToHand(Card card) {
+		if (cardsInHand < 5)
+			hand[cardsInHand++] = new Card(card.getValue(), card.getSuit());
+	}
+
+	public void PrintHand() {
+		for (int i = 0; i < cardsInHand; i++) {
+			System.out.printf("%5s", hand[i].toString(false));
+		}
+		System.out.println();
+	}
+
+	public void PrintBlackJackHand() {
+		for (int i = 0; i < cardsInHand; i++) {
+			if (i < 1)
+				System.out.printf("%5s", "*");
+			else
+				System.out.printf("%5s", hand[i].toString(false));
+		}
+		System.out.println();
+	}
+
+	public int getWorth(int ace) {
+		int worth = 0;
+		for (int i = 0; i < cardsInHand; i++) {
+			worth += hand[i].getWorth(ace);
+		}
+
+		return worth;
+	}
+
+	public boolean hasAce() {
+		for (int i = 0; i < cardsInHand; i++) {
+			if (hand[i].isAce())
+				return true;
+		}
+
+		return false;
+	}
+}

@@ -1,0 +1,24 @@
+import java.awt.*;
+import javax.swing.*;
+
+/*-
+ * GraphicsJPanel
+ * Draws some geometric objects on the panel.
+ * Author:  Don Spickler
+ * Date: 7/6/2016
+ */
+
+public class GraphicsJPanel extends JPanel {
+
+	public GraphicsJPanel() {
+		setBackground(Color.white);
+	}
+
+	public void paint(Graphics g) {
+		super.paint(g);
+
+		g.setColor(Color.red);
+		g.fillRect(50, 70, 250, 350);
+		g.clearRect(100, 100, 100, 100);
+	}
+}

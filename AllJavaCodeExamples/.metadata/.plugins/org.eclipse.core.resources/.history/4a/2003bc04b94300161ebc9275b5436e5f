@@ -1,0 +1,33 @@
+import java.awt.*;
+import javax.swing.*;
+
+public class IntroGUI005 extends JFrame{
+
+	private static IntroGUI004 prog;
+
+	public static void main(String[] args) {
+		prog = new IntroGUI004(args);
+		prog.setTitle("GUI");
+
+		prog.setBounds(20, 20, 700, 500);
+		prog.setVisible(true);
+		prog.toFront();
+	}
+
+	public IntroGUI004(String[] args) {
+	}
+
+	public void paint(Graphics g) {
+		super.paint(g);
+
+		Rectangle bounds = prog.getBounds();
+		int x = (int) bounds.getWidth();
+		int y = (int) bounds.getHeight();
+
+		for (int i = 0; i < 300; i++) {
+			g.setColor(new Color(gen.nextInt(255), gen.nextInt(255), gen.nextInt(255)));
+			g.drawLine(gen.nextInt(x), gen.nextInt(y), gen.nextInt(x), gen.nextInt(y));
+		}
+	}
+
+}

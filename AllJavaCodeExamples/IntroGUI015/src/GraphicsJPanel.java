@@ -1,0 +1,35 @@
+import java.awt.*;
+import javax.swing.*;
+
+/*-
+ * GraphicsJPanel
+ * Plots a hexagon.
+ * Author:  Don Spickler
+ * Date: 7/6/2016
+ */
+
+public class GraphicsJPanel extends JPanel {
+
+	public GraphicsJPanel() {
+		setBackground(Color.white);
+	}
+
+	public void paint(Graphics g) {
+		super.paint(g);
+
+		g.setColor(Color.black);
+		g.translate(200, 200);
+		g.drawLine(0, 200, 0, -200);
+		g.drawLine(-200, 0, 200, 0);
+
+		g.setColor(Color.red);
+
+		for (int i = 0; i <= 6; i++) {
+			double x = Math.cos(2 * Math.PI * ((double) i / 6));
+			double y = Math.sin(2 * Math.PI * ((double) i / 6));
+			double nextx = Math.cos(2 * Math.PI * ((double) (i + 1) / 6));
+			double nexty = Math.sin(2 * Math.PI * ((double) (i + 1) / 6));
+			g.drawLine((int) (100 * x), (int) (100 * y), (int) (100 * nextx), (int) (100 * nexty));
+		}
+	}
+}

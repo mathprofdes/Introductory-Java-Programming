@@ -1,0 +1,26 @@
+import java.awt.Color;
+import java.awt.Graphics;
+
+public class IntroGUI003 {
+
+	public static void main(String[] args) {
+		IntroGUI003 prog = new IntroGUI003(args);
+		prog.setTitle("GUI");
+
+		prog.setBounds(20, 20, 700, 500);
+		prog.setVisible(true);
+		prog.toFront();
+	}
+
+	public IntroGUI003(String[] args) {
+	}
+
+	public void paint(Graphics g) {
+		super.paint(g);
+
+		g.setColor(Color.black);
+		g.fillOval(60, 40, 220, 220);
+		g.setColor(Color.red);
+		g.fillOval(80, 60, 180, 180);
+	}
+}

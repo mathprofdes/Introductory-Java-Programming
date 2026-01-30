@@ -1,0 +1,76 @@
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.*;
+import javax.swing.border.LineBorder;
+
+public class IntroGUI020 extends JFrame {
+
+	private static IntroGUI020 prog;
+	private GraphicsJPanel canvas;
+
+	public static void main(String[] args) {
+		prog = new IntroGUI020(args);
+		prog.setTitle("GUI");
+
+		prog.setBounds(20, 20, 507, 429);
+		prog.setVisible(true);
+		prog.toFront();
+	}
+
+	public IntroGUI020(String[] args) {
+		JPanel content = new JPanel();
+		content.setLayout(new BorderLayout());
+		canvas = new GraphicsJPanel();
+		//final PaintJPanel paintArea = new PaintJPanel();
+
+		JButton OK_Button = new JButton("OK");
+		OK_Button.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				System.exit(0);
+			}
+		});
+
+		JButton Cancel_Button = new JButton("Clear");
+		Cancel_Button.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				canvas.clearScreen();
+			}
+		});
+
+		JButton Random_Button = new JButton("Random");
+		Random_Button.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				canvas.randomLines();
+			}
+		});
+
+		JPanel buttons = new JPanel();
+		buttons.add(OK_Button);
+		buttons.add(Cancel_Button);
+		buttons.add(Random_Button);
+		
+		content.add(buttons, BorderLayout.SOUTH);
+		content.add(canvas, BorderLayout.CENTER);
+		canvas.setBorder(new LineBorder(Color.BLACK));
+		buttons.setBorder(new LineBorder(Color.BLACK));
+
+		setContentPane(content);
+		
+		/*
+		JFrame window = new JFrame("GUI Test 2");
+		window.setContentPane(content);
+		window.setSize(507, 429);
+		window.setLocation(100, 100);
+		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		window.setVisible(true);
+*/
+		
+		
+//		canvas = new GraphicsJPanel();
+
+//		getContentPane().setLayout(new BorderLayout());
+//		getContentPane().add(canvas, BorderLayout.CENTER);
+	}
+}

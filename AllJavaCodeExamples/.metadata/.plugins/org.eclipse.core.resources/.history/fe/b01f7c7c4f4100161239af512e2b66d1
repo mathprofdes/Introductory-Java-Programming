@@ -1,0 +1,79 @@
+/*-
+ * Hand
+ * Hand class uses an array of 5 cards to simulate a single blackjack hand. 
+ * Author:  Don Spickler
+ * Date: 3/7/2011
+ */
+
+public class Hand {
+	// Data Members
+	private Card hand[] = new Card[5];
+	private int cardsInHand = 0;
+
+	// Constructor
+	public Hand() {
+		cardsInHand = 0;
+	}
+
+	// Empty Hand
+	public void clearHand() {
+		cardsInHand = 0;
+	}
+
+	// Returns the number of cards in the hand.
+	public int getNumCards() {
+		return cardsInHand;
+	}
+
+	//  Gets a specific card from the hand.  
+	public Card getCard(int i) {
+		if (i < cardsInHand)
+			return hand[i];
+
+		return null;
+	}
+
+	// Adds a card into the hand.
+	public void addToHand(Card card) {
+		if (cardsInHand < 5)
+			hand[cardsInHand++] = new Card(card.getValue(), card.getSuit());
+	}
+
+	// Prints out the hand.
+	public void PrintHand() {
+		for (int i = 0; i < cardsInHand; i++) {
+			System.out.printf("%5s", hand[i].toString(false));
+		}
+		System.out.println();
+	}
+
+	// Prints out the hand using a * for the first card.
+	public void PrintBlackJackHand() {
+		for (int i = 0; i < cardsInHand; i++) {
+			if (i < 1)
+				System.out.printf("%5s", "*");
+			else
+				System.out.printf("%5s", hand[i].toString(false));
+		}
+		System.out.println();
+	}
+
+	// Returns the worth of a hand using the input value for the ace.  
+	public int getWorth(int ace) {
+		int worth = 0;
+		for (int i = 0; i < cardsInHand; i++) {
+			worth += hand[i].getWorth(ace);
+		}
+
+		return worth;
+	}
+
+	public boolean hasAce() {
+		for (int i = 0; i < cardsInHand; i++) {
+			if (hand[i].isAce())
+				return true;
+		}
+
+		return false;
+	}
+}

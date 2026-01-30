@@ -1,0 +1,72 @@
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Scanner;
+
+/*-
+ * ArrayList004
+ * Example showing the use of an ArrayList with user-defined data type entries.  
+ * This program adds in the sorting of the ArrayList using the sort method in
+ * the Collections class in Java.  Note the addition of the compareTo method 
+ * in the Employee class.
+ * Author:  Don Spickler
+ * Date: 3/20/2011
+ */
+
+public class ArrayList004 {
+
+	public static void InputEmployees(ArrayList<Employee> A, int sz) {
+		Scanner keyboard = new Scanner(System.in);
+
+		for (int i = 0; i < sz; i++) {
+			System.out.print("Employee " + (i + 1) + " first name: ");
+			String fname = keyboard.nextLine();
+			System.out.print("Employee " + (i + 1) + " last name: ");
+			String lname = keyboard.nextLine();
+			System.out.print("Employee " + (i + 1) + " wage: ");
+			double wage = keyboard.nextDouble();
+			System.out.print("Employee " + (i + 1) + " hours worked: ");
+			double hours = keyboard.nextDouble();
+
+			A.add(new Employee(fname, lname, wage, hours));
+
+			System.out.println(); // Put space between inputs.
+			String clear = keyboard.nextLine(); // clear the end of line.
+		}
+	}
+
+	public static void PrintPayReport(ArrayList A) {
+		for (int i = 0; i < A.size(); i++) {
+			System.out.println(A.get(i));
+		}
+	}
+
+	public static double CalculateTotalPay(ArrayList<Employee> A) {
+		double totalpay = 0;
+		for (int i = 0; i < A.size(); i++) {
+			totalpay += A.get(i).pay();
+		}
+		return totalpay;
+	}
+
+	public static void PrintRecord(Employee employee) {
+		System.out.println("Name: " + employee.getFormalName());
+		System.out.println("Wage: " + employee.getWage());
+		System.out.println("Hours Worked: " + employee.getHoursWorked());
+		System.out.printf("Pay: %.2f \n", employee.pay());
+		System.out.println();
+	}
+
+	public static void main(String[] args) {
+		Scanner keyboard = new Scanner(System.in);
+		System.out.print("Input the number of employees: ");
+		int arraySize = keyboard.nextInt();
+
+		ArrayList<Employee> company = new ArrayList<Employee>();
+		InputEmployees(company, arraySize);
+
+		Collections.sort(company);
+
+		PrintPayReport(company);
+		System.out.printf("Company payout = %.2f \n", CalculateTotalPay(company));
+	}
+}

@@ -1,0 +1,467 @@
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.image.*;
+import java.awt.print.*;
+
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.event.*;
+
+/*-
+ * PrintPreview
+ * Creates a Print Preview dialog box for the specified print job.
+ * The dialog box has features for scaling the view, landscape and
+ * portrait selection, 
+ *  
+ * Author:  Don Spickler
+ */
+
+public class PrintPreview extends JFrame implements Runnable {
+	protected JScrollPane displayArea;
+	protected int m_wPage;
+	protected int m_hPage;
+	protected int width;
+	protected int height;
+	protected Printable m_target = null;
+	protected Book m_book = null;
+	protected PreviewContainer m_preview;
+	protected PageFormat pp_pf = null;
+	protected JSlider zoomSlide;
+	protected JLabel pageLabel;
+	protected JToolBar MainTools;
+	protected String PrintJobName = "Java Printing";
+	public ClassLoader cl = this.getClass().getClassLoader();
+	protected ToolbarButton PrintTool;
+
+	// private static final double DOTS_PER_INCH = 72.0;
+
+	public void Warning(String message, String title) {
+		try {
+			JOptionPane.showMessageDialog(this, message, title, JOptionPane.WARNING_MESSAGE);
+		} catch (Exception ex) {
+		}
+	}
+
+	public void Message(String message, String title) {
+		try {
+			JOptionPane.showMessageDialog(this, message, title, JOptionPane.INFORMATION_MESSAGE);
+		} catch (Exception ex) {
+		}
+	}
+
+	protected void getThePreviewPages() {
+		m_wPage = (int) (pp_pf.getWidth());
+		m_hPage = (int) (pp_pf.getHeight());
+		int scale = getDisplayScale();
+		width = (int) Math.ceil(m_wPage * scale / 100);
+		height = (int) Math.ceil(m_hPage * scale / 100);
+
+		int pageIndex = 0;
+		try {
+			while (true) {
+
+				int mb = 1024 * 1024;
+
+				boolean show = false;
+				if (show) {
+					// Getting the runtime reference from system
+					Runtime runtime = Runtime.getRuntime();
+
+					System.out.println("##### Heap utilization statistics [MB] #####");
+
+					System.out.println("Page:" + pageIndex);
+
+					// Print used memory
+					System.out.println("Used Memory:" + (runtime.totalMemory() - runtime.freeMemory()) / mb);
+
+					// Print free memory
+					System.out.println("Free Memory:" + runtime.freeMemory() / mb);
+
+					// Print total available memory
+					System.out.println("Total Memory:" + runtime.totalMemory() / mb);
+
+					// Print Maximum available memory
+					System.out.println("Max Memory:" + runtime.maxMemory() / mb);
+					System.out.println();
+				}
+
+				BufferedImage img = new BufferedImage(m_wPage, m_hPage, BufferedImage.TYPE_INT_RGB);
+				Graphics g = img.getGraphics();
+				g.setColor(Color.white);
+				g.fillRect(0, 0, m_wPage, m_hPage);
+
+				if (m_target != null) {
+					if (m_target.print(g, pp_pf, pageIndex) != Printable.PAGE_EXISTS)
+						break;
+				} else if (m_book != null) {
+					try {
+						if (m_book.getPrintable(pageIndex).print(g, m_book.getPageFormat(pageIndex),
+								pageIndex) != Printable.PAGE_EXISTS)
+							break;
+					} catch (Exception e) {
+						break;
+					}
+				}
+
+				PagePreview pp = new PagePreview(width, height, img);
+				m_preview.add(pp);
+				pageIndex++;
+			}
+
+			PrintTool.setEnabled(true);
+			if (pageIndex == 1)
+				pageLabel.setText(pageIndex + " Page   ");
+			else if (pageIndex > 1)
+				pageLabel.setText(pageIndex + " Pages   ");
+			else {
+				pageLabel.setText("");
+				PrintTool.setEnabled(false);
+			}
+		} catch (Exception e) {
+			pageLabel.setText("");
+			PrintTool.setEnabled(false);
+		}
+	}
+
+	protected void previewThePages() {
+		if (displayArea != null)
+			displayArea.setVisible(false);
+
+		if (m_preview == null)
+			m_preview = new PreviewContainer();
+		else
+			m_preview.removeAll();
+
+		getThePreviewPages();
+
+		displayArea = new JScrollPane(m_preview);
+		JScrollBar verticalScrollBar = displayArea.getVerticalScrollBar();
+		verticalScrollBar.setUnitIncrement(35);
+		getContentPane().add(displayArea, BorderLayout.CENTER);
+		setVisible(true);
+		System.gc();
+	}
+
+	public int getDisplayScale() {
+		return zoomSlide.getValue();
+	}
+
+	public PrintPreview(Book bk, String title) {
+		super(title);
+
+		m_book = bk;
+		pp_pf = m_book.getPageFormat(0);
+
+		for (int i = 0; i < m_book.getNumberOfPages(); i++) {
+			m_book.getPageFormat(i).setPaper(pp_pf.getPaper());
+			m_book.getPageFormat(i).setOrientation(pp_pf.getOrientation());
+		}
+
+		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+		PrintPreviewSetup(title, (int) (0.75 * screen.width), (int) (0.75 * screen.height));
+	}
+
+	public PrintPreview(Book bk, String title, int wd, int ht) {
+		super(title);
+		m_book = bk;
+		pp_pf = m_book.getPageFormat(0);
+
+		for (int i = 0; i < m_book.getNumberOfPages(); i++) {
+			m_book.getPageFormat(i).setPaper(pp_pf.getPaper());
+			m_book.getPageFormat(i).setOrientation(pp_pf.getOrientation());
+		}
+
+		PrintPreviewSetup(title, wd, ht);
+	}
+
+	public PrintPreview(Printable target, PageFormat pf, String title) {
+		super(title);
+
+		m_target = target;
+		pp_pf = pf;
+		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+		PrintPreviewSetup(title, (int) (0.75 * screen.width), (int) (0.75 * screen.height));
+	}
+
+	public PrintPreview(Printable target, PageFormat pf, String title, int wd, int ht) {
+		super(title);
+		m_target = target;
+		pp_pf = pf;
+		PrintPreviewSetup(title, wd, ht);
+	}
+
+	public void PrintPreviewSetup(String title, int wd, int ht) {
+		PrinterJob prnJob = PrinterJob.getPrinterJob();
+
+		if (pp_pf.getHeight() == 0 || pp_pf.getWidth() == 0) {
+			return;
+		}
+		setSize(600, 400);
+
+		displayArea = null;
+		m_preview = null;
+
+		createToolBar();
+
+		zoomSlide = new JSlider();
+		zoomSlide.setMinimum(0);
+		zoomSlide.setMaximum(150);
+		zoomSlide.setMajorTickSpacing(5);
+		zoomSlide.setSnapToTicks(true);
+		zoomSlide.setValue(100);
+		zoomSlide.setLabelTable(zoomSlide.createStandardLabels(50, 0));
+		zoomSlide.setPaintLabels(true);
+		zoomSlide.setPaintTicks(true);
+
+		Dimension tempd = zoomSlide.getPreferredSize();
+		int sliderLength = 300;
+		zoomSlide.setPreferredSize(new Dimension(sliderLength, (int) tempd.getHeight() + 10));
+		zoomSlide.setMaximumSize(new Dimension(sliderLength, (int) tempd.getHeight() + 10));
+		zoomSlide.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent e) {
+				Thread runner = new Thread(PrintPreview.this);
+				runner.start();
+			}
+		});
+
+		JPanel zoomSlidePanel = new JPanel();
+		zoomSlidePanel.setLayout(new BoxLayout(zoomSlidePanel, BoxLayout.X_AXIS));
+		zoomSlidePanel.add(new JLabel("  Zoom   "));
+		zoomSlidePanel.add(zoomSlide);
+		zoomSlidePanel.add(Box.createHorizontalGlue());
+
+		getContentPane().add(MainTools, BorderLayout.NORTH);
+		getContentPane().add(zoomSlidePanel, BorderLayout.SOUTH);
+		setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+		setSize(wd, ht);
+		setVisible(true);
+		previewThePages();
+	}
+
+	public void run() {
+		int scale = getDisplayScale();
+		width = (int) (m_wPage * scale / 100);
+		height = (int) (m_hPage * scale / 100);
+
+		Component[] comps = m_preview.getComponents();
+		for (int k = 0; k < comps.length; k++) {
+			if (!(comps[k] instanceof PagePreview))
+				continue;
+			PagePreview pp = (PagePreview) comps[k];
+			pp.setScaledSize(width, height);
+		}
+		m_preview.doLayout();
+		m_preview.getParent().getParent().validate();
+	}
+
+	protected void createToolBar() {
+		MainTools = new JToolBar("Print Preview Tools");
+		MainTools.setFloatable(false);
+		MainTools.setOpaque(false);
+		Dimension tempd;
+
+		PrintTool = new ToolbarButton(new ImageIcon(cl.getResource("PrintIcon.GIF")), "Print...", 25, 25);
+		PrintTool.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				try {
+					PrinterJob prnJob = PrinterJob.getPrinterJob();
+					if (m_target != null) {
+						prnJob.setPrintable(m_target, pp_pf);
+					} else if (m_book != null) {
+						prnJob.setPageable(m_book);
+					}
+
+					if (prnJob.printDialog()) {
+						setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+						prnJob.setJobName(PrintJobName);
+						prnJob.print();
+						setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+					}
+
+				} catch (Exception ex) {
+					Warning("There was an error in the printing system.", "Printer Error");
+				}
+			}
+		});
+
+		ToolbarButton PageTool = new ToolbarButton(new ImageIcon(cl.getResource("FileTextImage.GIF")), "Page Setup...",
+				25, 25);
+		PageTool.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				try {
+					PrinterJob prnJob = PrinterJob.getPrinterJob();
+
+					pp_pf = prnJob.pageDialog(pp_pf);
+
+					if (m_book != null) {
+						for (int i = 0; i < m_book.getNumberOfPages(); i++)
+							m_book.getPageFormat(i).setPaper(pp_pf.getPaper());
+					}
+
+					previewThePages();
+				} catch (Exception ex) {
+				}
+			}
+		});
+
+		ToolbarButton PorLanTool = new ToolbarButton(new ImageIcon(cl.getResource("PorLanImage.GIF")),
+				"Toggle Between Portrait and Landscape Orientation", 25, 25);
+		PorLanTool.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				if (pp_pf.getOrientation() == PageFormat.PORTRAIT) {
+					pp_pf.setOrientation(PageFormat.LANDSCAPE);
+				} else {
+					pp_pf.setOrientation(PageFormat.PORTRAIT);
+				}
+
+				if (m_book != null) {
+					for (int i = 0; i < m_book.getNumberOfPages(); i++)
+						m_book.getPageFormat(i).setOrientation(pp_pf.getOrientation());
+				}
+
+				previewThePages();
+			}
+		});
+
+		ToolbarButton CloseTool = new ToolbarButton(new ImageIcon(cl.getResource("RemoveImage.GIF")), "Close Preview",
+				25, 25);
+		CloseTool.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				dispose();
+			}
+		});
+
+		// Add tools to toolbar
+
+		MainTools.add(PorLanTool);
+		MainTools.add(PageTool);
+		MainTools.add(new JLabel(new ImageIcon(cl.getResource("ToolSeparatorImage.GIF"))));
+		MainTools.add(PrintTool);
+		MainTools.add(javax.swing.Box.createHorizontalGlue());
+		pageLabel = new JLabel();
+		MainTools.add(pageLabel);
+	}
+
+	class PreviewContainer extends JPanel {
+		protected int H_GAP = 16;
+		protected int V_GAP = 10;
+
+		public Dimension getPreferredSize() {
+			int n = getComponentCount();
+			if (n == 0)
+				return new Dimension(H_GAP, V_GAP);
+			Component comp = getComponent(0);
+			Dimension dc = comp.getPreferredSize();
+			int w = dc.width;
+			int h = dc.height;
+
+			Dimension dp = getParent().getSize();
+			int nCol = Math.max((dp.width - H_GAP) / (w + H_GAP), 1);
+			int nRow = n / nCol;
+			if (nRow * nCol < n)
+				nRow++;
+
+			int ww = nCol * (w + H_GAP) + H_GAP;
+			int hh = nRow * (h + V_GAP) + V_GAP;
+			Insets ins = getInsets();
+			return new Dimension(ww + ins.left + ins.right, hh + ins.top + ins.bottom);
+		}
+
+		public Dimension getMaximumSize() {
+			return getPreferredSize();
+		}
+
+		public Dimension getMinimumSize() {
+			return getPreferredSize();
+		}
+
+		public void doLayout() {
+			Insets ins = getInsets();
+			int x = ins.left + H_GAP;
+			int y = ins.top + V_GAP;
+
+			int n = getComponentCount();
+			if (n == 0)
+				return;
+			Component comp = getComponent(0);
+			Dimension dc = comp.getPreferredSize();
+			int w = dc.width;
+			int h = dc.height;
+
+			Dimension dp = getParent().getSize();
+			int nCol = Math.max((dp.width - H_GAP) / (w + H_GAP), 1);
+			int nRow = n / nCol;
+			if (nRow * nCol < n)
+				nRow++;
+
+			int index = 0;
+			for (int k = 0; k < nRow; k++) {
+				for (int m = 0; m < nCol; m++) {
+					if (index >= n)
+						return;
+					comp = getComponent(index++);
+					comp.setBounds(x, y, w, h);
+					x += w + H_GAP;
+				}
+				y += h + V_GAP;
+				x = ins.left + H_GAP;
+			}
+		}
+	}
+
+	class PagePreview extends JPanel {
+		protected int m_w;
+		protected int m_h;
+		protected Image m_source;
+		protected Image m_img;
+
+		public PagePreview(int w, int h, Image source) {
+			m_w = w;
+			m_h = h;
+
+			if (m_w <= 0)
+				m_w = 1;
+			if (m_h <= 0)
+				m_h = 1;
+
+			m_source = source;
+			m_img = m_source.getScaledInstance(m_w, m_h, Image.SCALE_SMOOTH);
+			m_img.flush();
+			setBackground(Color.white);
+			setBorder(new MatteBorder(1, 1, 2, 2, Color.black));
+		}
+
+		public void setScaledSize(int w, int h) {
+			m_w = w;
+			m_h = h;
+
+			if (m_w <= 0)
+				m_w = 1;
+			if (m_h <= 0)
+				m_h = 1;
+
+			m_img = m_source.getScaledInstance(m_w, m_h, Image.SCALE_SMOOTH);
+			repaint();
+		}
+
+		public Dimension getPreferredSize() {
+			Insets ins = getInsets();
+			return new Dimension(m_w + ins.left + ins.right, m_h + ins.top + ins.bottom);
+		}
+
+		public Dimension getMaximumSize() {
+			return getPreferredSize();
+		}
+
+		public Dimension getMinimumSize() {
+			return getPreferredSize();
+		}
+
+		public void paint(Graphics g) {
+			g.setColor(getBackground());
+			g.fillRect(0, 0, getWidth(), getHeight());
+			g.drawImage(m_img, 0, 0, this);
+			paintBorder(g);
+		}
+	}
+}

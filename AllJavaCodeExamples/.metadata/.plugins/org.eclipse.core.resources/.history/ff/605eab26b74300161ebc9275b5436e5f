@@ -1,0 +1,20 @@
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+
+import javax.swing.JFrame;
+
+public class IntroGUI001 extends JFrame {
+
+	public static void main(String[] args) {
+		IntroGUI001 prog = new IntroGUI001(args);
+		prog.setTitle("GUI");
+
+		prog.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		prog.setBounds(20, 20, 700, 500);
+		prog.setVisible(true);
+		prog.toFront();
+	}
+
+	public IntroGUI001(String[] args) {
+	}
+}

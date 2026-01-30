@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Copy element &apos;JavaPad.java&apos; to &apos;GUI007/src&apos;&#x0D;&#x0A;- Original project: &apos;GUI006&apos;&#x0D;&#x0A;- Destination element: &apos;GUI007/src&apos;&#x0D;&#x0A;- Original element: &apos;JavaPad.java&apos;" description="Copy compilation unit" destination="=GUI007/src" element1="/src&lt;{JavaPad.java" files="0" flags="589830" folders="0" id="org.eclipse.jdt.ui.copy" policy="org.eclipse.jdt.ui.copyResources" stamp="1467823631124" units="1" version="1.0"/>
+</session>

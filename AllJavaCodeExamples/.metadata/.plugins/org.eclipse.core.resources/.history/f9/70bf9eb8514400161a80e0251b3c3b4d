@@ -1,0 +1,17 @@
+import java.awt.*;
+import javax.swing.*;
+
+public class GraphicsJPanel extends JPanel {
+
+	public GraphicsJPanel() {
+		setBackground(Color.white);
+	}
+
+	public void paint(Graphics g) {
+		super.paint(g);
+		
+		g.setColor(Color.red);
+		g.fillRect(50, 70, 250, 350);
+		g.clearRect(100, 100, 100, 100);		
+	}
+}

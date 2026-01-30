@@ -1,0 +1,52 @@
+import java.awt.*;
+import javax.swing.*;
+
+public class GraphicsJPanel extends JPanel {
+
+	public GraphicsJPanel() {
+		setBackground(Color.white);
+	}
+
+	public void paint(Graphics g) {
+		super.paint(g);
+		
+		g.setColor(Color.black);
+		for (int i = 0; i < 120; i+= 10)
+			g.drawLine(i, 0, i, 300);
+		
+		g.setColor(Color.red);
+		g.fillRect(0, 0, 50, 50);
+		g.setColor(Color.green);
+		g.fillRect(60, 0, 50, 50);
+		
+		g.setColor(Color.blue);
+		g.fillRect(0, 60, 50, 50);
+		g.setColor(Color.magenta);
+		g.fillRect(60, 60, 50, 50);
+		
+		g.setColor(new Color(0, 255, 0));
+		g.fillRect(0, 120, 50, 50);
+		g.setColor(new Color(0, 255, 255));
+		g.fillRect(60, 120, 50, 50);
+		
+		g.setColor(new Color(1f, 0f, 0f));
+		g.fillRect(0, 180, 50, 50);
+		g.setColor(new Color(1f, 0.5f, 0f));
+		g.fillRect(60, 180, 50, 50);
+
+		g.setColor(new Color(1f, 0f, 0f, 0.5f));
+		g.fillRect(0, 240, 50, 50);
+		g.setColor(new Color(255, 100, 0, 130));
+		g.fillRect(60, 240, 50, 50);
+
+		for (int i = 0; i < 120; i+= 10){
+			g.setColor(new Color(1f, 0f, 0f, i/120f));
+			g.fillRect(i, 300, 50, 50);
+		}
+		
+		for (int i = 0; i < 120; i++){
+			g.setColor(new Color(1f, 0f, 0f, i/120f));
+			g.drawLine(i, 360, i, 400);
+		}
+	}
+}

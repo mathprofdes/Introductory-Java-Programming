@@ -1,0 +1,32 @@
+import java.awt.*;
+
+import javax.swing.*;
+
+public class GraphicsJPanel extends JPanel {
+
+	public GraphicsJPanel() {
+		setBackground(Color.white);
+	}
+
+	public void paint(Graphics g) {
+		super.paint(g);
+		
+		int [] xvalues = new int [5];
+		int [] yvalues = new int [5];
+		
+		xvalues[0] = 20;
+		xvalues[1] = 120;
+		xvalues[2] = 290;
+		xvalues[3] = 20;
+		xvalues[4] = 80;
+		
+		yvalues[0] = 100; 
+		yvalues[1] = 200;
+		yvalues[2] = 20;
+		yvalues[3] = 50;
+		yvalues[4] = 210;
+		
+		g.setColor(Color.red);
+		g.drawPolygon(xvalues, yvalues, 5);
+	}
+}

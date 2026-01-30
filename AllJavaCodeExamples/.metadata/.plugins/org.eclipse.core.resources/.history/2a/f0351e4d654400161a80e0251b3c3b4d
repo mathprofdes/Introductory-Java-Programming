@@ -1,0 +1,57 @@
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.*;
+
+/*-
+ * GraphicsJPanel
+ * Freehand drawing panel.  
+ * Author:  Don Spickler
+ * Date: 7/6/2016
+ */
+
+public class GraphicsJPanel extends JPanel implements MouseListener, MouseMotionListener {
+
+	private int prevX, prevY; // The previous location of the mouse.
+
+	public GraphicsJPanel() {
+		setBackground(Color.white);
+		addMouseListener(this);
+		addMouseMotionListener(this);
+	}
+
+	public void mousePressed(MouseEvent evt) {
+		prevX = evt.getX(); // x-coordinate where the user clicked.
+		prevY = evt.getY(); // y-coordinate where the user clicked.
+	}
+
+	public void mouseDragged(MouseEvent evt) {
+		int x = evt.getX(); // x-coordinate of mouse.
+		int y = evt.getY(); // y-coordinate of mouse.
+
+		Graphics g = getGraphics();
+		g.drawLine(prevX, prevY, x, y);
+
+		// Get ready for the next line segment in the curve.
+		prevX = x;
+		prevY = y;
+	}
+
+	/*
+	// Some empty routines. These are required by the MouseListener
+	// and MouseMotionListener interfaces.
+	public void mouseEntered(MouseEvent evt) {
+	}
+
+	public void mouseExited(MouseEvent evt) {
+	}
+
+	public void mouseClicked(MouseEvent evt) {
+	}
+
+	public void mouseMoved(MouseEvent evt) {
+	}
+
+	public void mouseReleased(MouseEvent evt) {
+	}
+	*/
+}

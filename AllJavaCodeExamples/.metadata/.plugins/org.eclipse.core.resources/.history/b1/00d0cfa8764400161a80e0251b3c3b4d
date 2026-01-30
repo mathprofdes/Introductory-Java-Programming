@@ -1,0 +1,368 @@
+import java.awt.*;
+import java.awt.event.*;
+import java.io.*;
+import javax.swing.*;
+
+/*-
+ * JavaPad
+ * Added to the application:
+ * 1. The JTextArea
+ * 2. The Menu
+ * 3. The About Screen
+ * 4. Cut, Copy, and Paste
+ * 5. Select All
+ * 6. File transfer and choosing
+ *  
+ * Author:  Don Spickler
+ * Date: 7/6/2016
+ */
+
+
+public class JavaPad extends JFrame implements WindowListener {
+
+	private JTextArea TextEditor;
+	private JMenuBar MainMenu;
+	private boolean wrapText;
+	private String currentFileName;
+
+	public static void main(String[] args) {
+		JavaPad prog = new JavaPad(args);
+
+		prog.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		prog.setBounds(20, 20, 700, 500);
+		prog.setVisible(true);
+		prog.toFront();
+	}
+
+	public JavaPad(String[] args) {
+		addWindowListener(this);
+		currentFileName = "";
+		updateTitle();
+
+		TextEditor = new JTextArea();
+		JScrollPane TextEditorSP = new JScrollPane(TextEditor);
+
+		wrapText = true;
+		TextEditor.setLineWrap(wrapText);
+		TextEditor.setWrapStyleWord(wrapText);
+
+		getContentPane().setLayout(new BorderLayout());
+		getContentPane().add(TextEditorSP, BorderLayout.CENTER);
+
+		createMenu();
+		setJMenuBar(MainMenu);
+	}
+	
+	private void updateTitle() {
+		if (currentFileName == "")
+			setTitle("JavaPad: Untitled");
+		else
+			setTitle("JavaPad: " + currentFileName);
+	}
+
+	private void createMenu() {
+		MainMenu = new JMenuBar();
+
+		JMenu FileMenu = new JMenu("File");
+		FileMenu.setMnemonic('F');
+
+		JMenu EditMenu = new JMenu("Edit");
+		EditMenu.setMnemonic('E');
+
+		JMenu HelpMenu = new JMenu("Help");
+		HelpMenu.setMnemonic('H');
+
+		JMenuItem NewMenuItem = new JMenuItem("New");
+		NewMenuItem.setMnemonic('n');
+		NewMenuItem.setAccelerator(KeyStroke.getKeyStroke('N', InputEvent.CTRL_DOWN_MASK));
+		NewMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onNew();
+			}
+		});
+
+		JMenuItem OpenMenuItem = new JMenuItem("Open...");
+		OpenMenuItem.setMnemonic('o');
+		OpenMenuItem.setAccelerator(KeyStroke.getKeyStroke('O', InputEvent.CTRL_DOWN_MASK));
+		OpenMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onOpen();
+			}
+		});
+
+		JMenuItem SaveAsMenuItem = new JMenuItem("Save As...");
+		SaveAsMenuItem.setMnemonic('a');
+		SaveAsMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onSaveAs();
+			}
+		});
+
+		JMenuItem SaveMenuItem = new JMenuItem("Save");
+		SaveMenuItem.setMnemonic('s');
+		SaveMenuItem.setAccelerator(KeyStroke.getKeyStroke('S', InputEvent.CTRL_DOWN_MASK));
+		SaveMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onSave();
+			}
+		});
+
+		JMenuItem ExitMenuItem = new JMenuItem("Exit");
+		ExitMenuItem.setMnemonic('x');
+		ExitMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				windowClosing(null);
+			}
+		});
+
+		JMenuItem CutMenuItem = new JMenuItem("Cut");
+		CutMenuItem.setAccelerator(KeyStroke.getKeyStroke('X', InputEvent.CTRL_DOWN_MASK));
+		CutMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				TextEditor.cut();
+			}
+		});
+
+		JMenuItem CopyMenuItem = new JMenuItem("Copy");
+		CopyMenuItem.setAccelerator(KeyStroke.getKeyStroke('C', InputEvent.CTRL_DOWN_MASK));
+		CopyMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				TextEditor.copy();
+			}
+		});
+
+		JMenuItem PasteMenuItem = new JMenuItem("Paste");
+		PasteMenuItem.setAccelerator(KeyStroke.getKeyStroke('V', InputEvent.CTRL_DOWN_MASK));
+		PasteMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				TextEditor.paste();
+			}
+		});
+
+		JMenuItem SelectAllMenuItem = new JMenuItem("Select All");
+		SelectAllMenuItem.setAccelerator(KeyStroke.getKeyStroke('A', InputEvent.CTRL_DOWN_MASK));
+		SelectAllMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				TextEditor.selectAll();
+			}
+		});
+
+		JMenuItem ToggleLineWrapMenuItem = new JMenuItem("Toggle Line Wrap Mode");
+		ToggleLineWrapMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				wrapText = !wrapText;
+				TextEditor.setLineWrap(wrapText);
+				TextEditor.setWrapStyleWord(wrapText);
+			}
+		});
+
+		JMenuItem AboutMenuItem = new JMenuItem("About JavaPad");
+		AboutMenuItem.setMnemonic('A');
+		AboutMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onShowAbout();
+			}
+		});
+
+		FileMenu.add(NewMenuItem);
+		FileMenu.add(OpenMenuItem);
+		FileMenu.addSeparator();
+		FileMenu.add(SaveMenuItem);
+		FileMenu.add(SaveAsMenuItem);
+		FileMenu.addSeparator();
+		FileMenu.add(ExitMenuItem);
+
+		EditMenu.add(CutMenuItem);
+		EditMenu.add(CopyMenuItem);
+		EditMenu.add(PasteMenuItem);
+		EditMenu.addSeparator();
+		EditMenu.add(SelectAllMenuItem);
+		EditMenu.addSeparator();
+		EditMenu.add(ToggleLineWrapMenuItem);
+
+		HelpMenu.add(AboutMenuItem);
+
+		MainMenu.add(FileMenu);
+		MainMenu.add(EditMenu);
+		MainMenu.add(HelpMenu);
+	}
+
+	private void onNew() {
+		boolean oktogo = true;
+
+		if (!TextEditor.getText().isEmpty()) {
+			oktogo = false;
+			int ans = JOptionPane.showConfirmDialog(this,
+					"This will clear all of the text in the editor.\nDo you wish to delete the current text?",
+					"Overwrite Text", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+			if (ans == JOptionPane.YES_OPTION)
+				oktogo = true;
+		}
+
+		if (!oktogo)
+			return;
+
+		TextEditor.setText("");
+		currentFileName = "";
+		updateTitle();
+	}
+
+	private void onOpen() {
+		boolean oktogo = true;
+
+		if (!TextEditor.getText().isEmpty()) {
+			oktogo = false;
+			int ans = JOptionPane.showConfirmDialog(this,
+					"This will replace all of the text in the editor with the file contents.\nDo you wish to overwrite the current text?",
+					"Overwrite Text", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+			if (ans == JOptionPane.YES_OPTION)
+				oktogo = true;
+		}
+
+		if (!oktogo)
+			return;
+
+		String filetext = OpenTextFile("Text Files", "txt");
+		TextEditor.setText(filetext);
+		TextEditor.setCaretPosition(0);
+		updateTitle();
+	}
+
+	private void onSaveAs() {
+		onTextFileSaveAs(TextEditor.getText(), "Text Files", "txt");
+		updateTitle();
+	}
+
+	private void onSave() {
+		if (currentFileName == "")
+			onTextFileSaveAs(TextEditor.getText(), "Text Files", "txt");
+		else
+			saveFile(currentFileName, TextEditor.getText());
+		
+		updateTitle();
+	}
+
+	private void onShowAbout() {
+		JOptionPane.showMessageDialog(this, "JavaPad\nWritten by: Don Spickler\nCopyright 2016", "About JavaPad",
+				JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	public void windowActivated(WindowEvent e) {
+	}
+
+	public void windowClosed(WindowEvent e) {
+	}
+
+	public void windowClosing(WindowEvent e) {
+		System.exit(0);
+	}
+
+	public void windowDeactivated(WindowEvent e) {
+	}
+
+	public void windowDeiconified(WindowEvent e) {
+	}
+
+	public void windowIconified(WindowEvent e) {
+	}
+
+	public void windowOpened(WindowEvent e) {
+	}
+
+	public String OpenTextFile(String FileTypeName, String ext) {
+		String[] fileTypes = new String[] { ext };
+		String filename = "";
+		JFileChooser fc = new JFileChooser();
+		SimpleFileFilter FileFilter = new SimpleFileFilter(fileTypes, FileTypeName + " (*." + ext + ")");
+		fc.addChoosableFileFilter(FileFilter);
+		fc.setFileFilter(FileFilter);
+		int option = fc.showOpenDialog(this);
+		if (option == JFileChooser.APPROVE_OPTION) {
+			if (fc.getSelectedFile() != null)
+				filename = fc.getSelectedFile().getPath();
+		} else
+			return "";
+
+		String InputText = "";
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(filename));
+			char[] cbuf = new char[10000];
+
+			int numchars = br.read(cbuf, 0, 10000);
+			while (numchars > 0) {
+				InputText += (new String(cbuf, 0, numchars));
+				numchars = br.read(cbuf, 0, 10000);
+			}
+			br.close();
+			currentFileName = filename;
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, "IO Error:  " + e.toString() + "\nCould not open file.", "IO Error",
+					JOptionPane.WARNING_MESSAGE);
+			InputText = "";
+			currentFileName = "";
+		}
+		return InputText;
+	}
+
+	public void onTextFileSaveAs(String InfoString, String FileTypeName, String ext) {
+		String[] fileTypes = new String[] { ext };
+		JFileChooser fc = new JFileChooser();
+		SimpleFileFilter FileFilter = new SimpleFileFilter(fileTypes, FileTypeName + " (*." + ext + ")");
+		fc.addChoosableFileFilter(FileFilter);
+		fc.setFileFilter(FileFilter);
+		fc.setDialogTitle("Save As");
+		int option = fc.showSaveDialog(this);
+		if (option == JFileChooser.APPROVE_OPTION) {
+			if (fc.getSelectedFile() != null) {
+				String filename = fc.getSelectedFile().getPath();
+				filename = filename.trim();
+				if (!filename.toLowerCase().endsWith("." + ext))
+					filename = filename + "." + ext;
+
+				boolean okToSave = true;
+				if (FileExists(filename)) {
+					okToSave = false;
+					int ans = JOptionPane.showConfirmDialog(this,
+							"The file " + filename + " already exists. \nDo you wish to overwrite the file?",
+							"Overwrite File", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+					if (ans == JOptionPane.YES_OPTION)
+						okToSave = true;
+				}
+
+				if (okToSave) {
+					saveFile(filename, InfoString);
+				}
+			}
+		}
+	}
+
+	public boolean FileExists(String testFilename) {
+		boolean retval = false;
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(testFilename));
+			br.close();
+			retval = true;
+		} catch (Exception e) {
+			retval = false;
+		}
+		return retval;
+	}
+
+	private void saveFile(String filename, String infoStr) {
+		try {
+			PrintWriter outputfile = new PrintWriter(new FileWriter(filename));
+			outputfile.print(infoStr);
+			outputfile.close();
+			currentFileName = filename;
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, "The file could not be saved.", "IO Error",
+					JOptionPane.WARNING_MESSAGE);
+			File f = new File(filename);
+			try {
+				f.delete();
+			} catch (Exception delex) {
+			}
+			currentFileName = "";
+		}
+	}
+}

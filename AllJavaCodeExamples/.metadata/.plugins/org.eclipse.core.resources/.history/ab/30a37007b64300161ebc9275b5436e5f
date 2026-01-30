@@ -1,0 +1,12 @@
+import java.awt.event.WindowListener;
+
+import javax.swing.JFrame;
+
+public class IntroGUI001 extends JFrame implements WindowListener {
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+
+	}
+
+}

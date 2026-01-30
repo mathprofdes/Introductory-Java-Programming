@@ -1,0 +1,12 @@
+
+public class IntroGUI007 {
+
+	private static IntroGUI007 prog;
+	private GraphicsJPanel canvas;
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+
+	}
+
+}

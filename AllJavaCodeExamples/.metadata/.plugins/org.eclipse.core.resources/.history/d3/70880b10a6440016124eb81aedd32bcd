@@ -1,0 +1,713 @@
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.print.*;
+import java.io.*;
+
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.swing.*;
+import javax.swing.event.*;
+import javax.swing.text.*;
+import javax.swing.undo.*;
+
+/*-
+ * JavaPad
+ * Added to the application:
+ * 1. The JTextArea
+ * 2. The Menu
+ * 3. The About Screen
+ * 4. Cut, Copy, and Paste
+ * 5. Select All
+ * 6. File transfer and choosing
+ * 7. Undo, Redo, and file properties
+ * 8. Print Preview and Printing
+ * 9. Toolbar
+ *  
+ * Author:  Don Spickler
+ * Date: 7/6/2016
+ */
+
+public class JavaPad extends JFrame implements WindowListener {
+
+	private JTextArea TextEditor;
+	private JMenuBar MainMenu;
+	private JToolBar MainTools;
+	private boolean wrapText;
+	private String currentFileName;
+	private UndoManager undoManager;
+	public ClassLoader cl = this.getClass().getClassLoader();
+
+	public static void main(String[] args) {
+		JavaPad prog = new JavaPad(args);
+
+		prog.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		prog.setBounds(20, 20, 700, 500);
+		prog.setVisible(true);
+		prog.toFront();
+	}
+
+	public JavaPad(String[] args) {
+		addWindowListener(this);
+		currentFileName = "";
+		updateTitle();
+
+		TextEditor = new JTextArea();
+		JScrollPane TextEditorSP = new JScrollPane(TextEditor);
+
+		wrapText = true;
+		TextEditor.setLineWrap(wrapText);
+		TextEditor.setWrapStyleWord(wrapText);
+		TextEditor.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
+		TextEditor.setTabSize(4);
+
+		createMenu();
+		createToolBar();
+		setJMenuBar(MainMenu);
+
+		getContentPane().setLayout(new BorderLayout());
+		getContentPane().add(TextEditorSP, BorderLayout.CENTER);
+		getContentPane().add(MainTools, BorderLayout.NORTH);
+
+		undoManager = new UndoManager();
+		undoManager.setLimit(-1); // Unlimited
+
+		Document notedoc = TextEditor.getDocument();
+		notedoc.addUndoableEditListener(new UndoableEditListener() {
+			public void undoableEditHappened(UndoableEditEvent e) {
+				undoManager.addEdit(e.getEdit());
+			}
+		});
+
+		TextEditor.addKeyListener(new KeyListener() {
+			public void keyPressed(KeyEvent e) {
+
+				if (e.getModifiersEx() == KeyEvent.CTRL_DOWN_MASK)
+					if (e.getKeyCode() == KeyEvent.VK_Z) {
+						try {
+							if (undoManager.canUndo()) {
+								undoManager.undo();
+							}
+						} catch (CannotUndoException exp) {
+						}
+					}
+
+				if (e.getModifiersEx() == KeyEvent.CTRL_DOWN_MASK)
+					if (e.getKeyCode() == KeyEvent.VK_Y) {
+						try {
+							if (undoManager.canRedo()) {
+								undoManager.redo();
+							}
+						} catch (CannotRedoException exp) {
+						}
+					}
+			}
+
+			public void keyTyped(KeyEvent e) {
+			}
+
+			public void keyReleased(KeyEvent e) {
+			}
+		});
+
+	}
+
+	private void updateTitle() {
+		if (currentFileName == "")
+			setTitle("JavaPad: Untitled");
+		else
+			setTitle("JavaPad: " + currentFileName);
+	}
+
+	private void createMenu() {
+		MainMenu = new JMenuBar();
+
+		JMenu FileMenu = new JMenu("File");
+		FileMenu.setMnemonic('F');
+
+		JMenu EditMenu = new JMenu("Edit");
+		EditMenu.setMnemonic('E');
+
+		JMenu HelpMenu = new JMenu("Help");
+		HelpMenu.setMnemonic('H');
+
+		JMenuItem NewMenuItem = new JMenuItem("New", new ImageIcon(cl.getResource("FileNewImage.GIF")));
+		NewMenuItem.setMnemonic('n');
+		NewMenuItem.setAccelerator(KeyStroke.getKeyStroke('N', InputEvent.CTRL_DOWN_MASK));
+		NewMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onNew();
+			}
+		});
+
+		JMenuItem OpenMenuItem = new JMenuItem("Open...", new ImageIcon(cl.getResource("FileOpenImage.GIF")));
+		OpenMenuItem.setMnemonic('o');
+		OpenMenuItem.setAccelerator(KeyStroke.getKeyStroke('O', InputEvent.CTRL_DOWN_MASK));
+		OpenMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onOpen();
+			}
+		});
+
+		JMenuItem SaveAsMenuItem = new JMenuItem("Save As...", new ImageIcon(cl.getResource("FileSaveAsImage.GIF")));
+		SaveAsMenuItem.setMnemonic('a');
+		SaveAsMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onSaveAs();
+			}
+		});
+
+		JMenuItem SaveMenuItem = new JMenuItem("Save", new ImageIcon(cl.getResource("FileSaveImage.GIF")));
+		SaveMenuItem.setMnemonic('s');
+		SaveMenuItem.setAccelerator(KeyStroke.getKeyStroke('S', InputEvent.CTRL_DOWN_MASK));
+		SaveMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onSave();
+			}
+		});
+
+		JMenuItem PrintMenuItem = new JMenuItem("Print...", new ImageIcon(cl.getResource("PrintPreviewIcon.GIF")));
+		PrintMenuItem.setMnemonic('p');
+		PrintMenuItem.setAccelerator(KeyStroke.getKeyStroke('P', InputEvent.CTRL_DOWN_MASK));
+		PrintMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onPrintPreview();
+			}
+		});
+
+		JMenuItem StatsMenuItem = new JMenuItem("Properties...", new ImageIcon(cl.getResource("BarChartImage.GIF")));
+		StatsMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onShowStatistics();
+			}
+		});
+
+		JMenuItem ExitMenuItem = new JMenuItem("Exit", new ImageIcon(cl.getResource("RemoveImage.GIF")));
+		ExitMenuItem.setMnemonic('x');
+		ExitMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				windowClosing(null);
+			}
+		});
+
+		JMenuItem UndoMenuItem = new JMenuItem("Undo", new ImageIcon(cl.getResource("Undo.GIF")));
+		UndoMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onUndo();
+			}
+		});
+
+		JMenuItem RedoMenuItem = new JMenuItem("Redo", new ImageIcon(cl.getResource("Redo.GIF")));
+		RedoMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onRedo();
+			}
+		});
+
+		JMenuItem CutMenuItem = new JMenuItem("Cut", new ImageIcon(cl.getResource("CutImage.GIF")));
+		CutMenuItem.setAccelerator(KeyStroke.getKeyStroke('X', InputEvent.CTRL_DOWN_MASK));
+		CutMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				TextEditor.cut();
+			}
+		});
+
+		JMenuItem CopyMenuItem = new JMenuItem("Copy", new ImageIcon(cl.getResource("CopyImage.GIF")));
+		CopyMenuItem.setAccelerator(KeyStroke.getKeyStroke('C', InputEvent.CTRL_DOWN_MASK));
+		CopyMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				TextEditor.copy();
+			}
+		});
+
+		JMenuItem PasteMenuItem = new JMenuItem("Paste", new ImageIcon(cl.getResource("PasteImage.GIF")));
+		PasteMenuItem.setAccelerator(KeyStroke.getKeyStroke('V', InputEvent.CTRL_DOWN_MASK));
+		PasteMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				TextEditor.paste();
+			}
+		});
+
+		JMenuItem SelectAllMenuItem = new JMenuItem("Select All", new ImageIcon(cl.getResource("CopyAllImage.GIF")));
+		SelectAllMenuItem.setAccelerator(KeyStroke.getKeyStroke('A', InputEvent.CTRL_DOWN_MASK));
+		SelectAllMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				TextEditor.requestFocus();
+				TextEditor.selectAll();
+			}
+		});
+
+		JMenuItem ToggleLineWrapMenuItem = new JMenuItem("Toggle Line Wrap Mode",
+				new ImageIcon(cl.getResource("NewLineToSpaceIcon.GIF")));
+		ToggleLineWrapMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				wrapText = !wrapText;
+				TextEditor.setLineWrap(wrapText);
+				TextEditor.setWrapStyleWord(wrapText);
+			}
+		});
+
+		JMenuItem AboutMenuItem = new JMenuItem("About JavaPad", new ImageIcon(cl.getResource("About.PNG")));
+		AboutMenuItem.setMnemonic('A');
+		AboutMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onShowAbout();
+			}
+		});
+
+		FileMenu.add(NewMenuItem);
+		FileMenu.add(OpenMenuItem);
+		FileMenu.addSeparator();
+		FileMenu.add(SaveMenuItem);
+		FileMenu.add(SaveAsMenuItem);
+		FileMenu.addSeparator();
+		FileMenu.add(PrintMenuItem);
+		FileMenu.addSeparator();
+		FileMenu.add(StatsMenuItem);
+		FileMenu.addSeparator();
+		FileMenu.add(ExitMenuItem);
+
+		EditMenu.add(UndoMenuItem);
+		EditMenu.add(RedoMenuItem);
+		EditMenu.addSeparator();
+		EditMenu.add(CutMenuItem);
+		EditMenu.add(CopyMenuItem);
+		EditMenu.add(PasteMenuItem);
+		EditMenu.addSeparator();
+		EditMenu.add(SelectAllMenuItem);
+		EditMenu.add(ToggleLineWrapMenuItem);
+
+		HelpMenu.add(AboutMenuItem);
+
+		MainMenu.add(FileMenu);
+		MainMenu.add(EditMenu);
+		MainMenu.add(HelpMenu);
+	}
+
+	private void createToolBar() {
+		MainTools = new JToolBar("JavaPad Tools");
+		MainTools.setFloatable(false);
+
+		// Define tools
+
+		ToolbarButton NewTool = new ToolbarButton(new ImageIcon(cl.getResource("FileNewImage.GIF")), "New", 25, 25);
+		NewTool.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onNew();
+			}
+		});
+
+		ToolbarButton OpenTool = new ToolbarButton(new ImageIcon(cl.getResource("FileOpenImage.GIF")), "Open...", 25,
+				25);
+		OpenTool.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onOpen();
+			}
+		});
+
+		ToolbarButton SaveAsTool = new ToolbarButton(new ImageIcon(cl.getResource("FileSaveAsImage.GIF")), "Save As...",
+				25, 25);
+		SaveAsTool.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onSaveAs();
+			}
+		});
+
+		ToolbarButton SaveTool = new ToolbarButton(new ImageIcon(cl.getResource("FileSaveImage.GIF")), "Save", 25, 25);
+		SaveTool.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onSave();
+			}
+		});
+
+		ToolbarButton PrintTool = new ToolbarButton(new ImageIcon(cl.getResource("PrintPreviewIcon.GIF")), "Print...",
+				25, 25);
+		PrintTool.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onPrintPreview();
+			}
+		});
+
+		ToolbarButton PropertiesTool = new ToolbarButton(new ImageIcon(cl.getResource("BarChartImage.GIF")),
+				"Properties...", 25, 25);
+		PropertiesTool.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onShowStatistics();
+			}
+		});
+
+		ToolbarButton UndoTool = new ToolbarButton(new ImageIcon(cl.getResource("Undo.GIF")), "Undo", 25, 25);
+		UndoTool.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onUndo();
+			}
+		});
+
+		ToolbarButton RedoTool = new ToolbarButton(new ImageIcon(cl.getResource("Redo.GIF")), "Redo", 25, 25);
+		RedoTool.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onRedo();
+			}
+		});
+
+		ToolbarButton CutTool = new ToolbarButton(new ImageIcon(cl.getResource("CutImage.GIF")), "Cut", 25, 25);
+		CutTool.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				TextEditor.cut();
+			}
+		});
+
+		ToolbarButton CopyTool = new ToolbarButton(new ImageIcon(cl.getResource("CopyImage.GIF")), "Copy", 25, 25);
+		CopyTool.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				TextEditor.copy();
+			}
+		});
+
+		ToolbarButton PasteTool = new ToolbarButton(new ImageIcon(cl.getResource("PasteImage.GIF")), "Paste", 25, 25);
+		PasteTool.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				TextEditor.paste();
+			}
+		});
+
+		ToolbarButton SelectAllTool = new ToolbarButton(new ImageIcon(cl.getResource("CopyAllImage.GIF")), "Select All",
+				25, 25);
+		SelectAllTool.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				TextEditor.requestFocus();
+				TextEditor.selectAll();
+			}
+		});
+
+		ToolbarButton ToggleLineWrapTool = new ToolbarButton(new ImageIcon(cl.getResource("NewLineToSpaceIcon.GIF")),
+				"Toggle Line Wrap Mode", 25, 25);
+		ToggleLineWrapTool.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				wrapText = !wrapText;
+				TextEditor.setLineWrap(wrapText);
+				TextEditor.setWrapStyleWord(wrapText);
+			}
+		});
+
+		ToolbarButton AboutTool = new ToolbarButton(new ImageIcon(cl.getResource("About.PNG")), "About JavaPad", 25,
+				25);
+		AboutTool.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent evt) {
+				onShowAbout();
+			}
+		});
+
+		// Add tools to toolbar
+
+		MainTools.add(NewTool);
+		MainTools.add(OpenTool);
+		MainTools.add(SaveTool);
+		MainTools.add(SaveAsTool);
+		MainTools.add(new JLabel(new ImageIcon(cl.getResource("ToolSeparatorImage.GIF"))));
+		MainTools.add(PrintTool);
+		MainTools.add(new JLabel(new ImageIcon(cl.getResource("ToolSeparatorImage.GIF"))));
+		MainTools.add(PropertiesTool);
+		MainTools.add(new JLabel(new ImageIcon(cl.getResource("ToolSeparatorImage.GIF"))));
+		MainTools.add(UndoTool);
+		MainTools.add(RedoTool);
+		MainTools.add(new JLabel(new ImageIcon(cl.getResource("ToolSeparatorImage.GIF"))));
+		MainTools.add(CutTool);
+		MainTools.add(CopyTool);
+		MainTools.add(PasteTool);
+		MainTools.add(new JLabel(new ImageIcon(cl.getResource("ToolSeparatorImage.GIF"))));
+		MainTools.add(SelectAllTool);
+		MainTools.add(ToggleLineWrapTool);
+		MainTools.add(new JLabel(new ImageIcon(cl.getResource("ToolSeparatorImage.GIF"))));
+		MainTools.add(AboutTool);
+	}
+
+	private void onNew() {
+		boolean oktogo = true;
+
+		if (!TextEditor.getText().isEmpty()) {
+			oktogo = false;
+			int ans = JOptionPane.showConfirmDialog(this,
+					"This will clear all of the text in the editor.\nDo you wish to delete the current text?",
+					"Overwrite Text", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+			if (ans == JOptionPane.YES_OPTION)
+				oktogo = true;
+		}
+
+		if (!oktogo)
+			return;
+
+		TextEditor.setText("");
+		currentFileName = "";
+		updateTitle();
+	}
+
+	private void onOpen() {
+		boolean oktogo = true;
+
+		if (!TextEditor.getText().isEmpty()) {
+			oktogo = false;
+			int ans = JOptionPane.showConfirmDialog(this,
+					"This will replace all of the text in the editor with the file contents.\nDo you wish to overwrite the current text?",
+					"Overwrite Text", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+			if (ans == JOptionPane.YES_OPTION)
+				oktogo = true;
+		}
+
+		if (!oktogo)
+			return;
+
+		String filetext = OpenTextFile("Text Files", "*.txt, *.cpp, *.java");
+		TextEditor.setText(filetext);
+		TextEditor.setCaretPosition(0);
+		updateTitle();
+	}
+
+	private void onSaveAs() {
+		onTextFileSaveAs(TextEditor.getText(), "Text Files", "txt");
+		updateTitle();
+	}
+
+	private void onSave() {
+		if (currentFileName == "")
+			onTextFileSaveAs(TextEditor.getText(), "Text Files", "txt");
+		else
+			saveFile(currentFileName, TextEditor.getText());
+
+		updateTitle();
+	}
+
+	private void onUndo() {
+		try {
+			if (undoManager.canUndo()) {
+				undoManager.undo();
+			}
+		} catch (CannotUndoException exp) {
+		}
+		TextEditor.requestFocus();
+	}
+
+	private void onRedo() {
+		try {
+			if (undoManager.canRedo()) {
+				undoManager.redo();
+			}
+		} catch (CannotUndoException exp) {
+		}
+		TextEditor.requestFocus();
+	}
+		
+	private void onShowAbout() {
+		JOptionPane.showMessageDialog(this, "JavaPad\nWritten by: Don Spickler\nCopyright 2016", "About JavaPad",
+				JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	public void windowActivated(WindowEvent e) {
+	}
+
+	public void windowClosed(WindowEvent e) {
+	}
+
+	public void windowClosing(WindowEvent e) {
+		System.exit(0);
+	}
+
+	public void windowDeactivated(WindowEvent e) {
+	}
+
+	public void windowDeiconified(WindowEvent e) {
+	}
+
+	public void windowIconified(WindowEvent e) {
+	}
+
+	public void windowOpened(WindowEvent e) {
+	}
+
+	public String OpenTextFile(String FileTypeName, String ext) {
+		String[] fileTypes = new String[] { ext };
+		String filename = "";
+		JFileChooser fc = new JFileChooser();
+		SimpleFileFilter FileFilter = new SimpleFileFilter(fileTypes, FileTypeName + " (*." + ext + ")");
+		fc.addChoosableFileFilter(FileFilter);
+		fc.setFileFilter(FileFilter);
+		int option = fc.showOpenDialog(this);
+		if (option == JFileChooser.APPROVE_OPTION) {
+			if (fc.getSelectedFile() != null)
+				filename = fc.getSelectedFile().getPath();
+		} else
+			return "";
+
+		String InputText = "";
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(filename));
+			char[] cbuf = new char[10000];
+
+			int numchars = br.read(cbuf, 0, 10000);
+			while (numchars > 0) {
+				InputText += (new String(cbuf, 0, numchars));
+				numchars = br.read(cbuf, 0, 10000);
+			}
+			br.close();
+			currentFileName = filename;
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, "IO Error:  " + e.toString() + "\nCould not open file.", "IO Error",
+					JOptionPane.WARNING_MESSAGE);
+			InputText = "";
+			currentFileName = "";
+		}
+		return InputText;
+	}
+
+	public void onTextFileSaveAs(String InfoString, String FileTypeName, String ext) {
+		String[] fileTypes = new String[] { ext };
+		JFileChooser fc = new JFileChooser();
+		SimpleFileFilter FileFilter = new SimpleFileFilter(fileTypes, FileTypeName + " (*." + ext + ")");
+		fc.addChoosableFileFilter(FileFilter);
+		fc.setFileFilter(FileFilter);
+		fc.setDialogTitle("Save As");
+		int option = fc.showSaveDialog(this);
+		if (option == JFileChooser.APPROVE_OPTION) {
+			if (fc.getSelectedFile() != null) {
+				String filename = fc.getSelectedFile().getPath();
+				filename = filename.trim();
+				if (!filename.toLowerCase().endsWith("." + ext))
+					filename = filename + "." + ext;
+
+				boolean okToSave = true;
+				if (FileExists(filename)) {
+					okToSave = false;
+					int ans = JOptionPane.showConfirmDialog(this,
+							"The file " + filename + " already exists. \nDo you wish to overwrite the file?",
+							"Overwrite File", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+					if (ans == JOptionPane.YES_OPTION)
+						okToSave = true;
+				}
+
+				if (okToSave) {
+					saveFile(filename, InfoString);
+				}
+			}
+		}
+	}
+
+	public boolean FileExists(String testFilename) {
+		boolean retval = false;
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(testFilename));
+			br.close();
+			retval = true;
+		} catch (Exception e) {
+			retval = false;
+		}
+		return retval;
+	}
+
+	private void saveFile(String filename, String infoStr) {
+		try {
+			PrintWriter outputfile = new PrintWriter(new FileWriter(filename));
+			outputfile.print(infoStr);
+			outputfile.close();
+			currentFileName = filename;
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, "The file could not be saved.", "IO Error",
+					JOptionPane.WARNING_MESSAGE);
+			File f = new File(filename);
+			try {
+				f.delete();
+			} catch (Exception delex) {
+			}
+			currentFileName = "";
+		}
+	}
+
+	public void onShowStatistics() {
+		JPanel statsPanel = new JPanel();
+		statsPanel.setLayout(new BoxLayout(statsPanel, BoxLayout.Y_AXIS));
+		String inputText = TextEditor.getText();
+
+		String inputTextForLines = TextEditor.getText();
+		String[] splitInput = inputTextForLines.split("\n");
+		int numlines = splitInput.length;
+
+		if (numlines == 1)
+			if (splitInput[0].trim().length() == 0)
+				numlines = 0;
+
+		int numnonblanklines = 0;
+		if (numlines > 0)
+			for (int i = 0; i < splitInput.length; i++)
+				if (splitInput[i].trim().length() > 0)
+					numnonblanklines++;
+
+		inputText = inputText.replaceAll("\t", "");
+		inputText = inputText.replaceAll("\n", "");
+		int numchars = inputText.length();
+		String inputTextTrim = inputText.replaceAll(" ", "");
+		int numcharsNoSpace = inputTextTrim.length();
+
+		JPanel numLinesPanel = new JPanel();
+		numLinesPanel.setLayout(new BoxLayout(numLinesPanel, BoxLayout.X_AXIS));
+		numLinesPanel.add(new JLabel("Number of Lines: " + numlines));
+		numLinesPanel.add(Box.createHorizontalGlue());
+
+		JPanel numNonBlankLinesPanel = new JPanel();
+		numNonBlankLinesPanel.setLayout(new BoxLayout(numNonBlankLinesPanel, BoxLayout.X_AXIS));
+		numNonBlankLinesPanel.add(new JLabel("Number of Non-Blank Lines: " + numnonblanklines));
+		numNonBlankLinesPanel.add(Box.createHorizontalGlue());
+
+		JPanel numcharsPanel = new JPanel();
+		numcharsPanel.setLayout(new BoxLayout(numcharsPanel, BoxLayout.X_AXIS));
+		numcharsPanel.add(new JLabel("Number of Characters (Including Spaces): " + numchars));
+		numcharsPanel.add(Box.createHorizontalGlue());
+
+		JPanel numcharsPanelNoSpace = new JPanel();
+		numcharsPanelNoSpace.setLayout(new BoxLayout(numcharsPanelNoSpace, BoxLayout.X_AXIS));
+		numcharsPanelNoSpace.add(new JLabel("Number of Characters (Excluding Spaces): " + numcharsNoSpace));
+		numcharsPanelNoSpace.add(Box.createHorizontalGlue());
+
+		String inputTextForWords = TextEditor.getText();
+		inputTextForWords = inputTextForWords.replaceAll("\n", " ");
+		inputTextForWords = inputTextForWords.replaceAll("\t", " ");
+		String[] words = inputTextForWords.split(" ");
+
+		int numwords = 0;
+		for (int i = 0; i < words.length; i++)
+			if (!words[i].trim().equalsIgnoreCase(""))
+				numwords++;
+
+		JPanel numwordsPanel = new JPanel();
+		numwordsPanel.setLayout(new BoxLayout(numwordsPanel, BoxLayout.X_AXIS));
+		numwordsPanel.add(new JLabel("Number of Words: " + numwords));
+		numwordsPanel.add(Box.createHorizontalGlue());
+
+		statsPanel.add(numLinesPanel);
+		statsPanel.add(numNonBlankLinesPanel);
+		statsPanel.add(numcharsPanel);
+		statsPanel.add(numcharsPanelNoSpace);
+		statsPanel.add(numwordsPanel);
+
+		JOptionPane.showMessageDialog(this, statsPanel, "Statistics", JOptionPane.PLAIN_MESSAGE);
+	}
+
+	public void onPrintPreview() {
+		if (TextEditor.getText().trim().length() == 0)
+			return;
+
+		try {
+			PrinterJob pj = PrinterJob.getPrinterJob();
+			HashPrintRequestAttributeSet pra = new HashPrintRequestAttributeSet();
+			Book bk = new Book();
+			PageFormat thisFormat = pj.defaultPage();
+			String printtitle = currentFileName;
+			if (printtitle == "")
+				printtitle = "Untitled";
+
+			TextPrinter tp = new TextPrinter(thisFormat, printtitle, "", TextEditor.getText(), 10, TextEditor.getFont(),
+					TextEditor.getTabSize());
+			PrintPreview np = new PrintPreview(tp, thisFormat, "Print Preview");
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, "Cannot print current document.", "Print Error",
+					JOptionPane.WARNING_MESSAGE);
+		}
+	}
+
+}

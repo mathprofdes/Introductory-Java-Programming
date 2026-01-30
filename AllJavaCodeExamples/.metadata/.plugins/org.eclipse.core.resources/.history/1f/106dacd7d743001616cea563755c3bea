@@ -1,0 +1,25 @@
+import java.awt.BorderLayout;
+
+import javax.swing.JFrame;
+
+public class IntroGUI015 extends JFrame {
+
+	private static IntroGUI014 prog;
+	private GraphicsJPanel canvas;
+
+	public static void main(String[] args) {
+		prog = new IntroGUI014(args);
+		prog.setTitle("GUI");
+
+		prog.setBounds(20, 20, 700, 500);
+		prog.setVisible(true);
+		prog.toFront();
+	}
+
+	public IntroGUI014(String[] args) {
+		canvas = new GraphicsJPanel();
+
+		getContentPane().setLayout(new BorderLayout());
+		getContentPane().add(canvas, BorderLayout.CENTER);
+	}
+}

@@ -1,0 +1,288 @@
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.print.PageFormat;
+import java.awt.print.Pageable;
+import java.awt.print.Printable;
+import java.awt.print.PrinterException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+/*-
+ * TextPrinter
+ * Pageable and Printable interface to reformat text to fit on the 
+ * printable area of the page and to manage page breaks. 
+ * 
+ * Author:  Don Spickler
+ */
+
+
+public class TextPrinter implements Pageable, Printable {
+	private PageFormat htmlFormat;
+	private String LeftHeader = "";
+	private String RightHeader = "";
+	private int FontSize = 10;
+	private String NoteText;
+
+	private int PageNumber = 0;
+	private int MaxPageNumber = Integer.MAX_VALUE;
+	private int PagePos = 0;
+	private boolean NewPage = true;
+
+	private Font boldFont;
+	private Font plainFont;
+	private Font italicFont;
+	private Font textFont;
+
+	private int tabSize = 2;
+
+	private int left;
+	private int right;
+	private int top;
+	private int bottom;
+	private int height;
+	private int width;
+
+	private int headerStart;
+	private int pageStart;
+	private int pageEnd;
+
+	private int horPosAdjust = 1;
+
+	public TextPrinter(PageFormat pf, String leftHead, String rightHead, String message, int fs) {
+		NoteText = message;
+		htmlFormat = pf;
+		LeftHeader = leftHead;
+		RightHeader = rightHead;
+		FontSize = fs;
+		textFont = new Font(Font.SERIF, Font.PLAIN, FontSize);
+	}
+
+	public TextPrinter(PageFormat pf, String leftHead, String rightHead, String message, int fs, Font TextFont) {
+		NoteText = message;
+		htmlFormat = pf;
+		LeftHeader = leftHead;
+		RightHeader = rightHead;
+		FontSize = fs;
+		textFont = new Font(TextFont.getFontName(), TextFont.getStyle(), FontSize);
+	}
+
+	public TextPrinter(PageFormat pf, String leftHead, String rightHead, String message, int fs, Font TextFont, int tabsize) {
+		NoteText = message;
+		htmlFormat = pf;
+		LeftHeader = leftHead;
+		RightHeader = rightHead;
+		FontSize = fs;
+		textFont = new Font(TextFont.getFontName(), TextFont.getStyle(), FontSize);
+		tabSize = tabsize;
+	}
+
+	public PageFormat getPageFormat() {
+		return htmlFormat;
+	}
+
+	public void setPageFormat(PageFormat pf) {
+		htmlFormat = pf;
+	}
+
+	public int getFontSize() {
+		return FontSize;
+	}
+
+	public void setFontSize(int sz) {
+		FontSize = sz;
+	}
+
+	public Font getTextFont() {
+		return textFont;
+	}
+
+	public void setTextFont(Font ft) {
+		textFont = ft;
+	}
+
+	private void drawText(String txt, Graphics2D g2, int pageIndex, int sx, int sy) {
+		txt += "  ";
+		int cx = sx;
+		int cy = sy;
+		String[] lines = txt.split("\n");
+		g2.setFont(textFont);
+		FontMetrics fm = g2.getFontMetrics();
+
+		String tabString = "";
+		if (tabSize < 0)
+			tabSize = 0;
+
+		for (int i = 0; i < tabSize; i++)
+			tabString += " ";
+
+		for (int line = 0; line < lines.length; line++) {
+			String thisline = lines[line];
+
+			if ((thisline != null) && (thisline.trim().length() > 0)) {
+				thisline = thisline.replaceAll("\t", tabString);
+
+				if (thisline.length() > 0) {
+					boolean done = false;
+					while (!done) {
+						if (thisline.length() == 0)
+							done = true;
+						else {
+							if (thisline.charAt(thisline.length() - 1) == ' ')
+								thisline = thisline.substring(0, thisline.length() - 1);
+							else
+								done = true;
+						}
+					}
+				}
+
+				String[] words = thisline.split(" ");
+				NewPage = false;
+				for (int word = 0; word < words.length; word++) {
+					NewPage = false;
+					if (cx + fm.stringWidth(words[word]) <= right) {
+						if (PageNumber == pageIndex) {
+							g2.drawString(words[word], cx, cy - fm.getDescent() - horPosAdjust);
+						}
+						cx = cx + fm.stringWidth(words[word] + " ");
+					} else {
+						PagePos += fm.getHeight();
+						cy = PagePos;
+						cx = left;
+						if (PagePos > pageEnd) {
+							PagePos = pageStart;
+							cy = PagePos;
+							cx = left;
+							NewPage = true;
+							PageNumber++;
+						}
+
+						if (PageNumber == pageIndex) {
+							g2.drawString(words[word], cx, cy - fm.getDescent() - horPosAdjust);
+						}
+						cx = cx + fm.stringWidth(words[word] + " ");
+					}
+				}
+			}
+
+			if (line < lines.length - 1) {
+				PagePos += fm.getHeight();
+				cy = PagePos;
+				cx = left;
+				if (PagePos > pageEnd) {
+					PagePos = pageStart;
+					cy = PagePos;
+					cx = left;
+					NewPage = true;
+					PageNumber++;
+				}
+			}
+		}
+	}
+
+	public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
+		Graphics2D g2 = (Graphics2D) g;
+		g2.setStroke(new BasicStroke(0.5f));
+		NewPage = true;
+
+		if ((pageIndex < 0) || (pageIndex >= getNumberOfPages()))
+			return NO_SUCH_PAGE;
+
+		if (NoteText == null)
+			return NO_SUCH_PAGE;
+
+		if (pageIndex > MaxPageNumber)
+			return NO_SUCH_PAGE;
+
+		PageNumber = 0;
+
+		left = (int) pageFormat.getImageableX();
+		right = (int) (pageFormat.getImageableX() + pageFormat.getImageableWidth());
+		top = (int) pageFormat.getImageableY();
+		bottom = (int) (pageFormat.getImageableY() + pageFormat.getImageableHeight());
+		height = (int) pageFormat.getImageableHeight();
+		width = (int) pageFormat.getImageableWidth();
+
+		boldFont = new Font(Font.SERIF, Font.BOLD, FontSize);
+		plainFont = new Font(Font.SERIF, Font.PLAIN, FontSize);
+		italicFont = new Font(Font.SERIF, Font.ITALIC, FontSize);
+
+		g2.setColor(Color.WHITE);
+		g2.drawRect(0, 0, (int) pageFormat.getWidth(), (int) pageFormat.getHeight());
+		g2.fillRect(0, 0, (int) pageFormat.getWidth(), (int) pageFormat.getHeight());
+		g2.setColor(Color.BLACK);
+
+		g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+		g2.setFont(plainFont);
+		FontMetrics fm = g2.getFontMetrics();
+
+		headerStart = (int) (top + 1.5 * fm.getHeight());
+		pageEnd = (int) (bottom - 1.5 * fm.getHeight());
+
+		// Draw Header
+
+		g2.setFont(boldFont);
+		fm = g2.getFontMetrics();
+		int strwd = fm.stringWidth(RightHeader);
+		g2.drawString(RightHeader, right - strwd, top + fm.getHeight() - fm.getDescent());
+		g2.drawLine(left, top + fm.getHeight(), right, top + fm.getHeight());
+
+		g2.setFont(boldFont);
+		fm = g2.getFontMetrics();
+		g2.drawString(LeftHeader, left, top + fm.getHeight() - fm.getDescent());
+
+		g2.setFont(textFont);
+		fm = g2.getFontMetrics();
+		pageStart = headerStart + fm.getHeight();
+		PagePos = pageStart;
+
+		// Draw Report
+
+		if (NoteText.trim().length() != 0)
+			drawText(NoteText, g2, pageIndex, left, PagePos);
+
+		// Draw Footer
+
+		g2.setFont(plainFont);
+		fm = g2.getFontMetrics();
+		g2.drawLine(left, bottom - fm.getHeight(), right, bottom - fm.getHeight());
+
+		String pagenum = "" + (pageIndex + 1);
+		strwd = fm.stringWidth(pagenum);
+		g2.setFont(plainFont);
+		g2.drawString(pagenum, right - strwd, bottom - fm.getDescent());
+
+		Date now = new Date();
+		SimpleDateFormat df = new SimpleDateFormat("EEEE, MMMM d, yyyy");
+
+		g2.setFont(italicFont);
+		fm = g2.getFontMetrics();
+		g2.drawString(df.format(now), left, bottom - fm.getDescent());
+
+		MaxPageNumber = PageNumber;
+
+		// Place at end to remove ending blank page.
+		if (NewPage)
+			MaxPageNumber--;
+
+		return PAGE_EXISTS;
+	}
+
+	public int getNumberOfPages() {
+		return 9999;
+	}
+
+	public PageFormat getPageFormat(int pageIndex) throws IndexOutOfBoundsException {
+		return htmlFormat;
+	}
+
+	public Printable getPrintable(int pageIndex) throws IndexOutOfBoundsException {
+		return this;
+	}
+}

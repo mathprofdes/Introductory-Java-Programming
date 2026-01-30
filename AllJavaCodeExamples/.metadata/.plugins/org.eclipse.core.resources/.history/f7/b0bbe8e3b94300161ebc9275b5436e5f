@@ -1,0 +1,13 @@
+import java.awt.*;
+import javax.swing.*;
+
+public class IntroGUI006  extends JFrame {
+
+	private static IntroGUI005 prog;
+
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+
+	}
+
+}

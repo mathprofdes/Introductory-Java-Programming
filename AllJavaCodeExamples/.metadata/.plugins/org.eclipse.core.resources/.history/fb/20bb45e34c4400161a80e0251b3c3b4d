@@ -1,0 +1,36 @@
+import java.awt.*;
+import javax.swing.*;
+
+public class IntroGUI005 extends JFrame {
+
+	private static IntroGUI005 prog;
+
+	public static void main(String[] args) {
+		prog = new IntroGUI005(args);
+		prog.setTitle("GUI");
+
+		prog.setBounds(20, 20, 700, 500);
+		prog.setVisible(true);
+		prog.toFront();
+	}
+
+	public IntroGUI005(String[] args) {
+	}
+
+	public void paint(Graphics g) {
+		super.paint(g);
+
+		g.setColor(Color.red);
+		g.fillOval(70, 50, 200, 50);
+		g.setColor(Color.green);
+		g.drawOval(10, 20, 100, 200);
+		g.drawRect(100, 200, 50, 50);
+		g.setColor(Color.blue);
+		g.fillRect(170, 200, 50, 50);
+
+		g.setColor(Color.red);
+		g.fillRect(170, 130, 50, 50);
+		g.setColor(Color.black);
+		g.drawRect(170, 130, 50, 50);
+	}
+}

@@ -1,0 +1,24 @@
+import java.awt.*;
+import javax.swing.*;
+
+public class IntroGUI008 extends JFrame {
+
+	private static IntroGUI008 prog;
+	private GraphicsJPanel canvas;
+
+	public static void main(String[] args) {
+		prog = new IntroGUI008(args);
+		prog.setTitle("GUI");
+
+		prog.setBounds(20, 20, 700, 500);
+		prog.setVisible(true);
+		prog.toFront();
+	}
+
+	public IntroGUI008(String[] args) {
+		canvas = new GraphicsJPanel();
+
+		getContentPane().setLayout(new BorderLayout());
+		getContentPane().add(canvas, BorderLayout.CENTER);
+	}
+}

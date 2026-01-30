@@ -1,0 +1,23 @@
+import javax.swing.JFrame;
+
+/*-
+ * IntroGUI001
+ * Shows the basic setup for the creation of a JFrame.
+ * Author:  Don Spickler
+ * Date: 7/6/2016
+ */
+
+public class IntroGUI001 extends JFrame {
+
+	public static void main(String[] args) {
+		IntroGUI001 prog = new IntroGUI001(args);
+		prog.setTitle("GUI");
+
+		prog.setBounds(20, 20, 700, 500);
+		prog.setVisible(true);
+		prog.toFront();
+	}
+
+	public IntroGUI001(String[] args) {
+	}
+}

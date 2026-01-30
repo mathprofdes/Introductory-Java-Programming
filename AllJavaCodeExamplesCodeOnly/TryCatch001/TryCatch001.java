@@ -1,0 +1,22 @@
+import java.util.Scanner;
+
+/*-
+ * TryCatch001
+ * Simple example to allow the user to see the result of division by 0.
+ * Author:  Don Spickler
+ * Date: 2/6/2011
+ */
+
+public class TryCatch001 {
+	public static void main(String[] args) {
+		Scanner keyboard = new Scanner(System.in);
+
+		System.out.print("Numerator = ");
+		int num = keyboard.nextInt();
+		System.out.print("Denominator = ");
+		int den = keyboard.nextInt();
+
+		System.out.println(num + "/" + den + " = " + num / den);
+		keyboard.close();
+	}
+}

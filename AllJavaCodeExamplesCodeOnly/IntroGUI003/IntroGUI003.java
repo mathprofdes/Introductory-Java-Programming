@@ -1,0 +1,36 @@
+import java.awt.*;
+import java.util.Random;
+import javax.swing.*;
+
+/*-
+ * IntroGUI003
+ * Draws 300 random lines in random colors inside the box [0, 300] X [0, 300].
+ * Author:  Don Spickler
+ * Date: 7/6/2016
+ */
+
+public class IntroGUI003 extends JFrame {
+
+	private Random gen = new Random();
+
+	public static void main(String[] args) {
+		IntroGUI003 prog = new IntroGUI003(args);
+		prog.setTitle("GUI");
+
+		prog.setBounds(20, 20, 700, 500);
+		prog.setVisible(true);
+		prog.toFront();
+	}
+
+	public IntroGUI003(String[] args) {
+	}
+
+	public void paint(Graphics g) {
+		super.paint(g);
+
+		for (int i = 0; i < 300; i++) {
+			g.setColor(new Color(gen.nextInt(255), gen.nextInt(255), gen.nextInt(255)));
+			g.drawLine(gen.nextInt(300), gen.nextInt(300), gen.nextInt(300), gen.nextInt(300));
+		}
+	}
+}
